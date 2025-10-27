@@ -1,0 +1,10 @@
+*/.env
+.bash*
+.cache/
+.docker/
+.lesshst
+.secrets/
+.ssh/
+.sudo_as_admin_successful
+.wget-hsts
+.profile

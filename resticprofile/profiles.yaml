@@ -1,0 +1,32 @@
+version: "1"
+
+local:
+  base-dir: ""
+  repository: "${LOCAL_REPOSITORY}"
+  password-file: "password.txt"
+  # prometheus-save-to-file: "local.prom"
+  prometheus-push: "http://localhost:9091"
+
+  backup:
+    exclude-file: "excludes"
+    schedule: "02:00" # runs nightly at 2AM
+    source-base: ""
+    files-from:
+      - "source.txt"
+    verbose: true
+
+remote:
+  base-dir: ""
+  repository: "${REMOTE_REPOSITORY}"
+  password-file: "aws_password.txt"
+  option: "s3.storage-class=DEEP_ARCHIVE"
+  # prometheus-save-to-file: "remote.prom"
+  prometheus-push: "http://localhost:9091"
+
+  backup:
+    exclude-file: "excludes"
+    schedule: "*-*-18 03:00" # runs monthly on the 17th at 3AM
+    source-base: ""
+    files-from:
+      - "source.txt"
+    verbose: true

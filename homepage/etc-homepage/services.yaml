@@ -1,0 +1,38 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/services/
+
+- Services:
+    - Immich:
+        icon: immich
+        href: {{HOMEPAGE_VAR_IMMICH_URL}}
+        ping: {{HOMEPAGE_VAR_IMMICH_SERVER}}
+        widget:
+            type: immich
+            url: {{HOMEPAGE_VAR_IMMICH_SERVER}}
+            key: {{HOMEPAGE_VAR_IMMICH_KEY}}
+            version: 2
+    - PiHole:
+        icon: pi-hole
+        href: {{HOMEPAGE_VAR_PIHOLE_URL}}
+        ping: {{HOMEPAGE_VAR_PIHOLE_SERVER}}
+        widget:
+            type: pihole
+            url: {{HOMEPAGE_VAR_PIHOLE_SERVER}}
+            version: 6 # required if running v6 or higher, defaults to 5
+            key: {{HOMEPAGE_VAR_PIHOLE_KEY}}
+    - Prometheus:
+        icon: prometheus
+        href: {{HOMEPAGE_VAR_PROMETHEUS_URL}}
+        widget:
+            type: prometheus
+            url: {{HOMEPAGE_VAR_PROMETHEUS_SERVER}}
+- Monitoring:
+    - Prometheus:
+        icon: prometheus
+        widget:
+            type: prometheusmetric
+            url: {{HOMEPAGE_VAR_PROMETHEUS_SERVER}}
+            metrics:
+                - label: Local Backup Job Status
+                  query: resticprofile_backup_status

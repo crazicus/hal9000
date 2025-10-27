@@ -1,0 +1,39 @@
+services:
+  certbot:
+    build: ./certbot
+    container_name: certbot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./nginx/html:/var/www/html
+      - ./nginx/certs:/etc/letsencrypt
+      - ./certbot/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
+      - ./certbot/init.sh:/init.sh
+    entrypoint: /init.sh
+    networks:
+      - proxy
+
+  nginx:
+    build: ./nginx
+    container_name: nginx-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./nginx/certs:/etc/letsencrypt
+      - ./nginx/html:/var/www/html
+      - ./nginx/watch-renewal.sh:/etc/nginx/watch-renewal.sh
+    depends_on:
+      - certbot
+    command: sh -c "/etc/nginx/watch-renewal.sh & nginx -g 'daemon off;'"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

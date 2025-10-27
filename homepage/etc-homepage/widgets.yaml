@@ -1,0 +1,31 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/info-widgets/
+
+- resources:
+    label: System Info
+    cpu: true
+    memory: true
+    disk: {{HOMEPAGE_VAR_SYS_DISK}} #/boot
+    cputemp: true
+    tempmin: 0 # optional, minimum cpu temp
+    tempmax: 100 # optional, maximum cpu temp
+    uptime: true
+    units: metric # only used by cpu temp, options: 'imperial' or 'metric'
+    refresh: 3000 # optional, in ms
+    diskUnits: bytes # optional, bytes (default) or bbytes. Only applies to disk
+    network: true # optional, uses 'default' if true or specify a network interface name
+
+- resources:
+    label: Data
+    expanded: true
+    disk: {{HOMEPAGE_VAR_DISK_0}} #/mnt/data
+
+- resources:
+    label: Backup
+    expanded: true
+    disk: {{HOMEPAGE_VAR_DISK_1}} #/mnt/backup
+
+- search:
+    provider: duckduckgo
+    target: _blank

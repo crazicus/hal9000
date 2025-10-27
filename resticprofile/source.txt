@@ -1,0 +1,5 @@
+/home/chris/immich-app
+/media/data
+/etc/fail2ban
+/home/chris/resticprofile
+/home/chris/pihole

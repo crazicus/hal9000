@@ -1,0 +1,177 @@
+# /etc/nginx/nginx.conf
+
+user nginx;
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    tcp_nopush     on;
+    tcp_nodelay    on;
+    keepalive_timeout  65;
+    types_hash_max_size 2048;
+
+    # Include additional server block configurations
+    include /etc/nginx/conf.d/*.conf;
+
+    # HTTP server block - redirect HTTP traffic to HTTPS
+    server {
+        listen 80;
+        server_name *.${DOMAIN};
+
+        # ACME challenge
+        location /.well-known/acme-challenge/ {
+            root /var/www/html;
+        }
+
+        # Redirect all HTTP traffic to HTTPS
+        location / {
+            return 301 https://$host$request_uri;
+        }
+    }
+
+    # HTTPS server block for pics.${DOMAIN}
+    server {
+        listen 443 ssl;
+        server_name pics.${DOMAIN};
+
+        # allow large file uploads
+        client_max_body_size 50000M;
+
+        # SSL Configuration (Make sure to use your valid SSL certificates)
+        ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+        # Set headers
+        proxy_set_header HOST			$host;
+        proxy_set_header X-Real-IP		$remote_addr;
+        proxy_set_header X-Forwarded-For	$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto	$scheme;
+
+        # enable websockets
+        proxy_http_version	1.1;
+        proxy_set_header	Upgrade		$http_upgrade;
+        proxy_set_header	Connection	"upgrade";
+        proxy_redirect		off;
+
+        # set timeout
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+        send_timeout 600s;
+
+        # Security headers (optional but recommended)
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Frame-Options SAMEORIGIN;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+
+        location / {
+            proxy_pass http://${PICS_SERVICE}:${PICS_PORT}/;
+        }
+    }
+
+    # HTTPS server block for pihole.${DOMAIN} for local IPs and VPN access only
+    server {
+        listen 80;
+        listen 443 ssl;
+        server_name pihole.${DOMAIN};
+
+        ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+        # enable for local devices
+        allow 192.168.0.0/24;
+
+        # enable for VPN devices
+        allow 10.5.5.0/24;
+
+        # deny everywhere else
+        deny all;
+
+        large_client_header_buffers 4 16k;
+
+        location / {
+            proxy_pass http://${PIHOLE_SERVICE}:${PIHOLE_PORT}/admin/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-For $scheme;
+            proxy_hide_header X-Frame-Options;
+            proxy_set_header X-Frame-Options "SAMEORIGIN";
+            proxy_read_timeout 90;
+        }
+
+        location /admin/ {
+            proxy_pass http://${PIHOLE_SERVICE}:${PIHOLE_PORT}/admin/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_hide_header X-Frame-Options;
+            proxy_set_header X-Frame-Options "SAMEORIGIN";
+            proxy_read_timeout 90;
+        }
+
+        location /api/ {
+            proxy_pass http://${PIHOLE_SERVICE}:${PIHOLE_PORT}/api/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_hide_header X-Frame-Options;
+            proxy_set_header X-Frame-Options "SAMEORIGIN";
+            proxy_read_timeout 90;
+        }
+    }
+
+    # HTTPS server block for homepage.${DOMAIN} for local IPs and VPN access only
+    server {
+        listen 443 ssl;
+        server_name homepage.${DOMAIN};
+
+        allow 192.168.0.0/24;
+        allow 10.5.5.0/24;
+        deny all;
+
+        ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+        # Proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        location / {
+            proxy_pass http://${HOMEPAGE_SERVICE}:${HOMEPAGE_PORT}/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_cache_bypass $http_upgrade;
+        }
+    }
+
+    # default catch-all server block for any non-matching domains
+    server {
+        listen 80 default_server;
+        listen 443 ssl default_server;
+        server_name _;  # Matches any undefined domain
+
+        ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+        location / {
+            return 404;  # You can also redirect or display a maintenance page
+        }
+    }
+}
