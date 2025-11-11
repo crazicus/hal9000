@@ -3,3 +3,5 @@
 /media/data/immich/postgres
 /home/chris/resticprofile/aws_password.txt
 /home/chris/resticprofile/password.txt
+/home/chris/pihole/etc-pihole/logrotate
+/media/data/lost+found

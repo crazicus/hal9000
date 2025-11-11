@@ -2,9 +2,8 @@ version: "1"
 
 local:
   base-dir: ""
-  repository: "${LOCAL_REPOSITORY}"
+  repository-file: "local.repo"
   password-file: "password.txt"
-  # prometheus-save-to-file: "local.prom"
   prometheus-push: "http://localhost:9091"
 
   backup:
@@ -17,10 +16,9 @@ local:
 
 remote:
   base-dir: ""
-  repository: "${REMOTE_REPOSITORY}"
+  repository-file: "remote.repo"
   password-file: "aws_password.txt"
   option: "s3.storage-class=DEEP_ARCHIVE"
-  # prometheus-save-to-file: "remote.prom"
   prometheus-push: "http://localhost:9091"
 
   backup:
